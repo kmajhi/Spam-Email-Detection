@@ -1,4 +1,8 @@
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:8000";
+// Empty string = relative URLs (same-origin) -- correct in production, where
+// Django serves this build directly. Local dev overrides this via frontend/.env
+// (VITE_API_BASE_URL=http://127.0.0.1:8000), since the Vite dev server and the
+// Django dev server run on different ports/origins.
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "";
 
 class ApiError extends Error {
   constructor(message, status) {

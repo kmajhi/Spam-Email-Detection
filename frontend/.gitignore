@@ -8,9 +8,9 @@ pnpm-debug.log*
 lerna-debug.log*
 
 node_modules
-dist
 dist-ssr
 *.local
+# dist/ is intentionally committed for deployment -- see root .gitignore note.
 
 # Editor directories and files
 .vscode/*

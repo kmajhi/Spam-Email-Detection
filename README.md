@@ -292,7 +292,46 @@ curl -X POST http://127.0.0.1:8000/api/predict/ \
 # {"prediction":"not_spam","label":"NOT SPAM","is_spam":false,"confidence":0.9957,"spam_probability":0.0043,"ham_probability":0.9957}
 ```
 
-## 14. Limitations
+## 14. Deployment
+
+The app is designed to deploy as **one single service**: Django serves the compiled React app
+directly (via WhiteNoise) alongside the API, so there's one URL and one running process —
+no separate frontend host, no CORS in production.
+
+**Render (or any host running a Linux Python buildpack) — free tier:**
+
+1. Push to GitHub (already done). `frontend/dist/` (the production build) is committed on purpose,
+   since Render's Python environment has no Node.js — rebuild and commit it after any frontend
+   change: `cd frontend && npm run build`.
+2. Render dashboard → New Web Service → connect this repo.
+3. **Root Directory:** leave blank (repo root).
+4. **Build Command:**
+   ```
+   pip install -r backend/requirements.txt && cd backend && python manage.py collectstatic --noinput && python manage.py migrate
+   ```
+5. **Start Command:**
+   ```
+   cd backend && gunicorn spamdetector.wsgi:application --bind 0.0.0.0:$PORT
+   ```
+6. **Environment variables:**
+   - `DJANGO_SECRET_KEY` — any long random string (Render can generate one)
+   - `DJANGO_DEBUG` — `False`
+   - `PYTHON_VERSION` — `3.13.0` (or similar; avoids picking an untested version)
+
+   `ALLOWED_HOSTS`/`CSRF_TRUSTED_ORIGINS` are handled automatically via Render's
+   `RENDER_EXTERNAL_HOSTNAME` env var (see `backend/spamdetector/settings.py`) — no need to set
+   `DJANGO_ALLOWED_HOSTS` manually.
+7. Deploy. Visit the `https://<your-service>.onrender.com` URL Render gives you — the whole app
+   (UI + API) runs from that one address.
+
+To create an admin login on the deployed instance, use Render's shell tab:
+`cd backend && python manage.py createsuperuser`.
+
+**Note (free tier):** Render's free web services spin down after 15 minutes of inactivity and take
+~30-60s to wake on the next request — expect a slow first load after idle periods. This is a
+platform limitation, not an app bug.
+
+## 15. Limitations
 
 - **Trained on SMS text, not raw email.** The linguistic style (headers, HTML, long body text,
   quoted threads) of real email differs from SMS. The model generalizes reasonably to short,
@@ -317,7 +356,7 @@ curl -X POST http://127.0.0.1:8000/api/predict/ \
   was verified by code review and by `npm run build` succeeding; it has not been visually confirmed
   at phone width. Recommend a manual check with the browser's device toolbar before presenting.
 
-## 15. Future improvements
+## 16. Future improvements
 
 - Add an email-specific dataset (e.g., a parsed subset of Enron-Spam/SpamAssassin) to compare
   generalization from SMS-trained to email-trained models.

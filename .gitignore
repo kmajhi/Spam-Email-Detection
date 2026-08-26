@@ -6,11 +6,15 @@ __pycache__/
 # Django
 backend/db.sqlite3
 backend/.env
+backend/staticfiles/
 
 # Frontend
 frontend/node_modules/
-frontend/dist/
 frontend/.env
+# NOTE: frontend/dist/ is intentionally committed (not ignored) -- Render's
+# Python build environment doesn't have Node, so we deploy the pre-built
+# output. Run `npm run build` in frontend/ and commit the result after any
+# frontend change before redeploying. See README "Deployment".
 
 # OS
 .DS_Store

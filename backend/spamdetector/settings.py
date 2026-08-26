@@ -30,6 +30,13 @@ ALLOWED_HOSTS = [
     if h.strip()
 ]
 
+# Render sets this automatically for the deployed service -- add it so the app
+# works out of the box without having to know the hostname in advance.
+RENDER_EXTERNAL_HOSTNAME = os.environ.get("RENDER_EXTERNAL_HOSTNAME")
+if RENDER_EXTERNAL_HOSTNAME:
+    ALLOWED_HOSTS.append(RENDER_EXTERNAL_HOSTNAME)
+    CSRF_TRUSTED_ORIGINS = [f"https://{RENDER_EXTERNAL_HOSTNAME}"]
+
 # --- Applications ------------------------------------------------------------
 
 INSTALLED_APPS = [
@@ -46,6 +53,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'corsheaders.middleware.CorsMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -98,6 +106,23 @@ USE_I18N = True
 USE_TZ = True
 
 STATIC_URL = 'static/'
+STATIC_ROOT = BASE_DIR / 'staticfiles'  # collectstatic target: Django admin/DRF static files
+STORAGES = {
+    "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
+    "staticfiles": {"BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage"},
+}
+
+# Serve the built React app (frontend/dist) directly, at the site root, via
+# WhiteNoise -- this is a separate mechanism from STATIC_URL/STATIC_ROOT above
+# (which only handles Django's own admin/DRF assets). Requires `npm run build`
+# to have been run in frontend/ first. Falls back to Django's default 404/DRF
+# behavior at "/" if the frontend hasn't been built (e.g. fresh clone before
+# `npm install && npm run build`).
+FRONTEND_DIST = PROJECT_ROOT / "frontend" / "dist"
+if FRONTEND_DIST.exists():
+    WHITENOISE_ROOT = FRONTEND_DIST
+    WHITENOISE_INDEX_FILE = True
+
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # --- CORS (React dev server) ------------------------------------------------
