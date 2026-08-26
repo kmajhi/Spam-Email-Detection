@@ -1,0 +1,70 @@
+{
+  "selected_model": "linear_svm_calibrated",
+  "selection_rule": "Highest F1-score on the spam class on the held-out test set; ties within 0.01 broken in favor of the simpler model (MultinomialNB).",
+  "dataset": {
+    "raw_stats": {
+      "n_rows": 5574,
+      "n_missing_label": 0,
+      "n_missing_text": 0,
+      "label_value_counts": {
+        "ham": 4827,
+        "spam": 747
+      },
+      "n_exact_duplicate_rows": 403
+    },
+    "rows_after_cleaning": 5171,
+    "class_distribution_counts": {
+      "ham": 4518,
+      "spam": 653
+    },
+    "class_distribution_pct": {
+      "ham": 87.37,
+      "spam": 12.63
+    },
+    "train_size": 4136,
+    "test_size": 1035,
+    "random_state": 42
+  },
+  "test_metrics": {
+    "accuracy": 0.9864734299516909,
+    "precision_spam": 0.975609756097561,
+    "recall_spam": 0.916030534351145,
+    "f1_spam": 0.9448818897637795,
+    "precision_macro": 0.9817741762943946,
+    "recall_macro": 0.9563559751401742,
+    "f1_macro": 0.968586319331229,
+    "roc_auc": 0.9973400662027967,
+    "confusion_matrix": {
+      "labels": [
+        "ham (0)",
+        "spam (1)"
+      ],
+      "matrix": [
+        [
+          901,
+          3
+        ],
+        [
+          11,
+          120
+        ]
+      ],
+      "tn": 901,
+      "fp": 3,
+      "fn": 11,
+      "tp": 120
+    }
+  },
+  "cv_metrics": {
+    "cv_accuracy_mean": 0.9869433783712738,
+    "cv_f1_mean": 0.9474124733378317,
+    "cv_precision_mean": 0.9591671503359975,
+    "cv_recall_mean": 0.9367399267399268,
+    "cv_roc_auc_mean": 0.9919119199421438,
+    "cv_accuracy_std": 0.004921840116531727,
+    "cv_f1_std": 0.02061927283866605,
+    "cv_precision_std": 0.020660357242606776,
+    "cv_recall_std": 0.03368088545216122,
+    "cv_roc_auc_std": 0.0032459598450171297
+  }
+}
