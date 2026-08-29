@@ -21,6 +21,10 @@ using a genuine, trained scikit-learn machine-learning pipeline — not keyword 
 - Loading state, empty state, and clear (non-leaky) error messages for backend/network failures.
 - Input validation: empty text, missing field, and oversized input (>20,000 chars) are all rejected
   with a 400 and a human-readable message, both client- and server-side.
+- A **"How It's Built"** page (linked from the navbar) — a scroll-driven walkthrough of the request
+  lifecycle, project structure, frontend/backend/ML code, API contract, tech stack, and deployment
+  model, with live metrics pulled from `GET /api/model-info/` and academic-style numbered citations
+  for every external claim (dataset, algorithms, frameworks).
 
 ## 3. Technology stack
 
@@ -70,9 +74,13 @@ Test Claude code/
     ├── package.json
     ├── .env.example
     └── src/
-        ├── App.jsx             # Main UI: textarea, analyze button, result, examples
+        ├── App.jsx             # Router shell: hash-based switch between the two pages below
         ├── api.js              # fetch wrappers for /api/predict/ and /api/model-info/
+        ├── pages/
+        │   ├── Detector.jsx        # The spam checker: textarea, analyze button, result, examples
+        │   └── HowItsBuilt.jsx     # "How It's Built" walkthrough page (+ HowItsBuilt.css)
         └── components/
+            ├── Navbar.jsx          # Sticky nav — links to both pages (+ Navbar.css)
             ├── ResultCard.jsx      # SPAM / NOT SPAM result + confidence bar
             └── ModelInfoPanel.jsx  # Collapsible methodology/metrics panel
 ```
@@ -80,6 +88,12 @@ Test Claude code/
 The `ml/` package is imported directly by Django (`backend/detector/ml_service.py`) rather than run
 as a separate ML microservice — this is the "integrate into Django, don't build an extra server"
 approach the assignment specifies.
+
+Page switching in the frontend uses the URL hash (`#/` for the detector, `#/how-its-built` for the
+walkthrough) rather than a router library, since the app has just two pages and is served from a
+single Django origin with no server-side route configuration. Section jumps within the walkthrough
+page (e.g. `#results`, `#ref-3`) update the hash via `history.replaceState` rather than a real hash
+navigation, so they scroll the page without being mistaken for a route change.
 
 ## 5. Dataset
 
