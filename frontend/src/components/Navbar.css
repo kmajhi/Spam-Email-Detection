@@ -30,15 +30,10 @@
 }
 
 .navbar__brand-mark {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 28px;
-  height: 28px;
-  border-radius: 8px;
-  background: var(--accent-soft);
-  color: var(--accent);
-  font-size: 14px;
+  width: 26px;
+  height: 26px;
+  object-fit: contain;
+  flex-shrink: 0;
 }
 
 .navbar__links {
@@ -65,6 +60,32 @@
 
 .navbar__link--active {
   color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.navbar__right {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.navbar__theme-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+
+.navbar__theme-toggle:hover {
+  color: var(--accent);
+  border-color: var(--accent);
   background: var(--accent-soft);
 }
 

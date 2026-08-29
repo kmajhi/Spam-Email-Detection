@@ -18,6 +18,15 @@ const NAV_SECTIONS = [
 
 export const SECTION_IDS = NAV_SECTIONS.map((s) => s.id);
 
+const RAIL_ROW_H = 36;
+
+const METRICS_CHART = [
+  { key: "accuracy", label: "Accuracy", svm: 98.65, nb: 97.58, lr: 97.29 },
+  { key: "precision", label: "Precision", svm: 97.56, nb: 100.0, lr: 96.4 },
+  { key: "recall", label: "Recall", svm: 91.6, nb: 80.92, lr: 81.68 },
+  { key: "f1", label: "F1-score", svm: 94.49, nb: 89.45, lr: 88.43 },
+];
+
 function scrollToId(id) {
   const el = document.getElementById(id);
   if (!el) return;
@@ -162,16 +171,10 @@ function useScrollProgress() {
   return progress;
 }
 
-function Section({ id, num, eyebrow, title, lede, children, alt }) {
+function Section({ id, num, eyebrow, title, lede, children }) {
   const [ref, visible] = useReveal();
   return (
-    <section
-      id={id}
-      ref={ref}
-      className={`hib-section ${alt ? "hib-section--alt" : ""} ${
-        visible ? "hib-section--visible" : ""
-      }`}
-    >
+    <section id={id} ref={ref} className={`hib-section ${visible ? "hib-section--visible" : ""}`}>
       <div className="hib-section__inner">
         <p className="hib-eyebrow">
           {num} · {eyebrow}
@@ -181,6 +184,59 @@ function Section({ id, num, eyebrow, title, lede, children, alt }) {
         {children}
       </div>
     </section>
+  );
+}
+
+function ArchitectureDiagram() {
+  return (
+    <figure className="hib-diagram">
+      <svg
+        viewBox="0 0 820 300"
+        role="img"
+        aria-label="React UI in the browser sends a POST request to /predict on the Django REST API, which has the ML pipeline (TF-IDF plus Linear SVM, loaded once and cached in memory) already loaded and returns the predicted label and confidence as JSON. Django also connects to SQLite, but only for its own admin and auth tables -- no message text is ever stored."
+      >
+        <defs>
+          <marker id="hib-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M0,0 L10,5 L0,10 z" fill="currentColor" />
+          </marker>
+        </defs>
+
+        <rect x="20" y="90" width="160" height="72" rx="8" fill="none" stroke="currentColor" strokeWidth="1.4" />
+        <text x="100" y="120" textAnchor="middle" fontSize="13" fill="currentColor" fontWeight="600">React UI</text>
+        <text x="100" y="138" textAnchor="middle" fontSize="11" fill="currentColor" opacity="0.7">(browser)</text>
+
+        <rect x="320" y="90" width="180" height="72" rx="8" fill="none" stroke="currentColor" strokeWidth="2" />
+        <text x="410" y="120" textAnchor="middle" fontSize="13" fill="currentColor" fontWeight="600">Django REST API</text>
+        <text x="410" y="138" textAnchor="middle" fontSize="11" fill="currentColor" opacity="0.7">gunicorn + WhiteNoise</text>
+
+        <rect x="640" y="90" width="160" height="72" rx="8" fill="none" stroke="currentColor" strokeWidth="1.4" />
+        <text x="720" y="116" textAnchor="middle" fontSize="13" fill="currentColor" fontWeight="600">ML Pipeline</text>
+        <text x="720" y="132" textAnchor="middle" fontSize="10.5" fill="currentColor" opacity="0.7">TF-IDF + Linear SVM</text>
+        <text x="720" y="146" textAnchor="middle" fontSize="10.5" fill="currentColor" opacity="0.7">(.joblib, loaded once)</text>
+
+        <rect x="320" y="228" width="180" height="54" rx="8" fill="none" stroke="currentColor" strokeWidth="1.2" strokeDasharray="3 3" opacity="0.75" />
+        <text x="410" y="251" textAnchor="middle" fontSize="12" fill="currentColor" opacity="0.85">SQLite</text>
+        <text x="410" y="266" textAnchor="middle" fontSize="10" fill="currentColor" opacity="0.6">admin / auth only</text>
+
+        <line x1="180" y1="112" x2="318" y2="112" stroke="currentColor" strokeWidth="1.4" markerEnd="url(#hib-arrow)" />
+        <text x="249" y="102" textAnchor="middle" fontSize="10.5" fill="currentColor">POST /predict</text>
+        <line x1="318" y1="146" x2="180" y2="146" stroke="currentColor" strokeWidth="1.4" markerEnd="url(#hib-arrow)" />
+        <text x="249" y="163" textAnchor="middle" fontSize="10.5" fill="currentColor">label + confidence</text>
+
+        <line x1="500" y1="112" x2="638" y2="112" stroke="currentColor" strokeWidth="1.4" markerEnd="url(#hib-arrow)" />
+        <text x="569" y="102" textAnchor="middle" fontSize="10.5" fill="currentColor">cached in memory</text>
+        <line x1="638" y1="146" x2="500" y2="146" stroke="currentColor" strokeWidth="1.4" markerEnd="url(#hib-arrow)" />
+        <text x="569" y="163" textAnchor="middle" fontSize="10.5" fill="currentColor">prediction</text>
+
+        <line x1="410" y1="162" x2="410" y2="226" stroke="currentColor" strokeWidth="1.2" strokeDasharray="3 3" markerEnd="url(#hib-arrow)" opacity="0.75" />
+        <text x="510" y="200" textAnchor="start" fontSize="10" fill="currentColor" opacity="0.7">no message text stored</text>
+      </svg>
+      <figcaption>
+        The model is loaded once when the server starts, then reused for every request — never
+        retrained, never per-request. Message text is never persisted; the only database traffic
+        is Django's own admin/auth tables.
+      </figcaption>
+    </figure>
   );
 }
 
@@ -225,21 +281,24 @@ export default function HowItsBuilt() {
         rocAuc: FALLBACK_METRICS.roc_auc,
       };
   const pct = (v) => `${(v * 100).toFixed(2)}%`;
+  const activeIndex = Math.max(0, NAV_SECTIONS.findIndex((s) => s.id === active));
 
   return (
     <div className="hib">
       <div className="hib-progress" style={{ width: `${progress}%` }} />
 
-      <nav className="hib-dotnav" aria-label="Section navigation">
-        {NAV_SECTIONS.map((s) => (
+      <nav className="hib-rail" aria-label="Section navigation">
+        <div className="hib-rail__highlight" style={{ transform: `translateY(${activeIndex * RAIL_ROW_H}px)` }} />
+        {NAV_SECTIONS.map((s, i) => (
           <a
             key={s.id}
             href={`#${s.id}`}
             onClick={jumpTo(s.id)}
-            className={`hib-dotnav__item ${active === s.id ? "hib-dotnav__item--active" : ""}`}
+            className="hib-rail__item"
+            aria-current={active === s.id ? "true" : undefined}
           >
-            <span className="hib-dotnav__dot" />
-            <span className="hib-dotnav__label">{s.label}</span>
+            <span className="hib-rail__num">{i + 1}</span>
+            <span className="hib-rail__label">{s.label}</span>
           </a>
         ))}
       </nav>
@@ -247,19 +306,13 @@ export default function HowItsBuilt() {
       {/* ---------- Hero ---------- */}
       <section className="hib-hero">
         <div className="hib-hero__inner">
-          <p className="hib-eyebrow">AI LAB · ENGINEERING WALKTHROUGH</p>
-          <h1>How It's Built</h1>
+          <p className="hib-eyebrow">AI Lab · Engineering Walkthrough</p>
+          <h1 className="hib-hero__title">How It's Built</h1>
           <p className="hib-hero__lede">
             A guided tour of the Spam Email Detection app: the end-to-end request
             flow, the project structure, and the frontend, backend, and machine-learning
             code that make the classifier work — plus the real, measured results behind it.
           </p>
-          <div className="hib-hero__tags">
-            <span>react</span>
-            <span>django rest framework</span>
-            <span>scikit-learn</span>
-            <span>vite</span>
-          </div>
           <div className="hib-hero__actions">
             <a className="hib-btn hib-btn--primary" href="#/">
               Try the detector
@@ -273,6 +326,7 @@ export default function HowItsBuilt() {
               View source on GitHub
             </a>
           </div>
+          <footer className="hib-hero__byline">react · django rest framework · scikit-learn · vite</footer>
         </div>
         <div className="hib-hero__scrollcue" aria-hidden="true">
           scroll
@@ -292,18 +346,18 @@ export default function HowItsBuilt() {
           system would demand."
       >
         <div className="hib-grid-2">
-          <div className="hib-card">
+          <div className="hib-block">
             <h3>In scope</h3>
-            <ul>
+            <ul className="hib-plain-list">
               <li>Train on a real, cited dataset — not synthetic examples</li>
               <li>A leakage-safe pipeline: test data never touches feature fitting</li>
               <li>Compare candidate models and select one by a documented rule</li>
               <li>A working, deployed UI + API — reachable right now</li>
             </ul>
           </div>
-          <div className="hib-card hib-card--muted">
+          <div className="hib-block">
             <h3>Deliberately out of scope</h3>
-            <ul>
+            <ul className="hib-plain-list">
               <li>Deep learning or LLM-based classification</li>
               <li>Hardcoded spam-word lists as the actual detector</li>
               <li>Fabricated metrics, results, or explanations</li>
@@ -319,56 +373,33 @@ export default function HowItsBuilt() {
         num="02"
         eyebrow="ARCHITECTURE"
         title="One request, three layers, no wasted hops."
-        alt
       >
-        <div className="hib-flow">
-          <div className="hib-flow__stage">
-            <strong>Browser</strong>
-            <code>App.jsx</code>
-          </div>
-          <div className="hib-flow__arrow">
-            <span>→</span>
-            <small>POST /api/predict/</small>
-          </div>
-          <div className="hib-flow__stage">
-            <strong>Django REST API</strong>
-            <code>views.py · serializers.py</code>
-          </div>
-          <div className="hib-flow__arrow">
-            <span>→</span>
-            <small>clean_text() → TF-IDF → SVM</small>
-          </div>
-          <div className="hib-flow__stage">
-            <strong>ML Service</strong>
-            <code>ml_service.py · predict.py</code>
-          </div>
-          <div className="hib-flow__arrow">
-            <span>→</span>
-            <small>JSON {"{"}label, confidence{"}"}</small>
-          </div>
-          <div className="hib-flow__stage">
-            <strong>Rendered result</strong>
-            <code>ResultCard.jsx</code>
-          </div>
-        </div>
+        <ArchitectureDiagram />
 
         <ol className="hib-steps">
-          <li>User pastes text and clicks Analyze.</li>
           <li>
-            <code>api.js</code> sends it to the API; <code>serializers.py</code> rejects
-            empty, missing, or over-20,000-character text before it reaches the model.
+            <span className="hib-num">01</span>
+            <span>User pastes text and clicks Analyze.</span>
           </li>
           <li>
-            <code>ml_service.py</code> hands the text to <code>predict.py</code>, which runs
-            it through the cached, already-fitted scikit-learn <Cite n={2} /> pipeline.
+            <span className="hib-num">02</span>
+            <span>
+              <code>api.js</code> sends it to the API; <code>serializers.py</code> rejects
+              empty, missing, or over-20,000-character text before it reaches the model.
+            </span>
           </li>
-          <li>The JSON response renders as a SPAM / NOT SPAM label with a confidence bar.</li>
+          <li>
+            <span className="hib-num">03</span>
+            <span>
+              <code>ml_service.py</code> hands the text to <code>predict.py</code>, which runs
+              it through the cached, already-fitted scikit-learn <Cite n={2} /> pipeline.
+            </span>
+          </li>
+          <li>
+            <span className="hib-num">04</span>
+            <span>The JSON response renders as a SPAM / NOT SPAM label with a confidence bar.</span>
+          </li>
         </ol>
-        <p className="hib-note">
-          The model is loaded once when the Django process starts and reused for every
-          request — never retrained or reloaded per request. No message text is ever
-          persisted; the only database traffic is Django's own admin/auth tables.
-        </p>
       </Section>
 
       {/* ---------- 03 Structure ---------- */}
@@ -423,7 +454,6 @@ export default function HowItsBuilt() {
         num="04"
         eyebrow="DATA & METHOD"
         title="A cited dataset, cleaned honestly."
-        alt
       >
         <div className="hib-grid-2">
           <div>
@@ -448,15 +478,31 @@ export default function HowItsBuilt() {
               since the file is tab-separated plain text, not CSV.
             </div>
           </div>
-          <ol className="hib-pipeline">
-            <li>Clean labels, drop duplicates &amp; empty rows</li>
-            <li>Stratified 80/20 train/test split</li>
+          <ol className="hib-steps">
             <li>
-              TF-IDF <Cite n={5} /> fit on the training split only
+              <span className="hib-num">01</span>
+              <span>Clean labels, drop duplicates &amp; empty rows</span>
             </li>
-            <li>Train 3 candidate models</li>
-            <li>Evaluate on the held-out test set</li>
-            <li>Select the winner by F1 on the spam class</li>
+            <li>
+              <span className="hib-num">02</span>
+              <span>Stratified 80/20 train/test split</span>
+            </li>
+            <li>
+              <span className="hib-num">03</span>
+              <span>TF-IDF <Cite n={5} /> fit on the training split only</span>
+            </li>
+            <li>
+              <span className="hib-num">04</span>
+              <span>Train 3 candidate models</span>
+            </li>
+            <li>
+              <span className="hib-num">05</span>
+              <span>Evaluate on the held-out test set</span>
+            </li>
+            <li>
+              <span className="hib-num">06</span>
+              <span>Select the winner by F1 on the spam class</span>
+            </li>
           </ol>
         </div>
       </Section>
@@ -468,53 +514,56 @@ export default function HowItsBuilt() {
         eyebrow="RESULTS"
         title="Three models, one honest comparison."
       >
-        <div className="hib-table-wrap">
-          <table className="hib-table">
-            <thead>
-              <tr>
-                <th>Model</th>
-                <th>Accuracy</th>
-                <th>Precision</th>
-                <th>Recall</th>
-                <th>F1 (spam)</th>
-                <th>ROC-AUC</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td>Multinomial Naive Bayes</td>
-                <td>97.58%</td>
-                <td>100.0%</td>
-                <td>80.92%</td>
-                <td>89.45%</td>
-                <td>0.9918</td>
-              </tr>
-              <tr>
-                <td>Logistic Regression</td>
-                <td>97.29%</td>
-                <td>96.40%</td>
-                <td>81.68%</td>
-                <td>88.43%</td>
-                <td>0.9941</td>
-              </tr>
-              <tr className="hib-table__selected">
-                <td>
-                  Linear SVM, Platt-calibrated <Cite n={4} /> <Cite n={3} />
-                </td>
-                <td>98.65%</td>
-                <td>97.56%</td>
-                <td>91.60%</td>
-                <td>94.49%</td>
-                <td>0.9973</td>
-              </tr>
-            </tbody>
-          </table>
+        <div className="hib-chart-legend">
+          <span><i style={{ background: "var(--hib-series-svm)" }} />Linear SVM (selected)</span>
+          <span><i style={{ background: "var(--hib-series-nb)" }} />Naive Bayes</span>
+          <span><i style={{ background: "var(--hib-series-lr)" }} />Logistic Regression</span>
         </div>
-        <p className="hib-note">
-          Selected by highest F1 on the spam class — not raw accuracy — because the
-          dataset is imbalanced (~87% ham). Confirmed by 5-fold cross-validation:
-          F1 = 94.7% ± 2.1%.
-        </p>
+
+        <div
+          className="hib-bars"
+          role="img"
+          aria-label="Grouped bar chart comparing accuracy, precision, recall and F1-score on the spam class for three models on the held-out test set. Linear SVM leads on every metric: 98.65% accuracy, 97.56% precision, 91.60% recall, 94.49% F1. Naive Bayes reaches 100% precision but only 80.92% recall. Logistic Regression scores 96.40% precision and 81.68% recall."
+        >
+          {METRICS_CHART.map((row) => (
+            <div className="hib-bar-group" key={row.key}>
+              <div className="hib-bar hib-bar--svm" style={{ height: `${row.svm}%` }}>
+                <span className="hib-bar__label">{row.svm.toFixed(1)}</span>
+                <span className="hib-bar__tip">SVM · {row.label} {row.svm.toFixed(2)}%</span>
+              </div>
+              <div className="hib-bar hib-bar--nb" style={{ height: `${row.nb}%` }}>
+                <span className="hib-bar__tip">NB · {row.label} {row.nb.toFixed(2)}%</span>
+              </div>
+              <div className="hib-bar hib-bar--lr" style={{ height: `${row.lr}%` }}>
+                <span className="hib-bar__tip">LogReg · {row.label} {row.lr.toFixed(2)}%</span>
+              </div>
+            </div>
+          ))}
+        </div>
+        <div className="hib-bars-axis">
+          {METRICS_CHART.map((row) => (
+            <span key={row.key}>{row.label}</span>
+          ))}
+        </div>
+
+        <div className="hib-grid-2" style={{ marginTop: "8px" }}>
+          <div className="hib-callout">
+            <strong>Selected: Linear SVM</strong> (Platt-calibrated <Cite n={3} />, support-vector
+            model <Cite n={4} />) — highest F1 on the spam class, not simply highest accuracy.
+            Confirmed by 5-fold cross-validation: F1 = 94.7% ± 2.1%.
+          </div>
+          <div className="hib-cm">
+            <div />
+            <div className="hib-cm__hd">Pred. ham</div>
+            <div className="hib-cm__hd">Pred. spam</div>
+            <div className="hib-cm__rl">Actual ham</div>
+            <div className="hib-cm__cell hib-cm__cell--correct">901<small>TN</small></div>
+            <div className="hib-cm__cell hib-cm__cell--error">3<small>FP</small></div>
+            <div className="hib-cm__rl">Actual spam</div>
+            <div className="hib-cm__cell hib-cm__cell--error">11<small>FN</small></div>
+            <div className="hib-cm__cell hib-cm__cell--correct">120<small>TP</small></div>
+          </div>
+        </div>
 
         <div className="hib-live">
           <div className="hib-live__header">
@@ -560,10 +609,9 @@ export default function HowItsBuilt() {
         num="06"
         eyebrow="CODE WALKTHROUGH"
         title="One preprocessing function, used identically at train and inference time."
-        alt
       >
         <div className="hib-code-grid">
-          <div className="hib-card">
+          <div className="hib-block">
             <h3>Frontend</h3>
             <ul className="hib-file-list">
               <li><code>App.jsx</code>router shell (this page vs. the detector)</li>
@@ -573,7 +621,7 @@ export default function HowItsBuilt() {
               <li><code>ModelInfoPanel.jsx</code>live methodology panel</li>
             </ul>
           </div>
-          <div className="hib-card">
+          <div className="hib-block">
             <h3>Backend</h3>
             <ul className="hib-file-list">
               <li><code>urls.py</code>routes /api/predict/, /api/model-info/</li>
@@ -583,7 +631,7 @@ export default function HowItsBuilt() {
               <li><code>exceptions.py</code>never leaks tracebacks/paths</li>
             </ul>
           </div>
-          <div className="hib-card">
+          <div className="hib-block">
             <h3>Machine learning</h3>
             <ul className="hib-file-list">
               <li><code>data_loading.py</code>load TSV, clean, dedupe</li>
@@ -645,39 +693,28 @@ export default function HowItsBuilt() {
         num="08"
         eyebrow="TECH STACK"
         title="Four layers, deliberately minimal."
-        alt
       >
-        <div className="hib-table-wrap">
-          <table className="hib-table hib-table--stack">
-            <tbody>
-              <tr>
-                <td>Frontend</td>
-                <td>
-                  React <Cite n={8} />, Vite <Cite n={9} />, plain JavaScript, CSS (no UI framework)
-                </td>
-              </tr>
-              <tr>
-                <td>Backend</td>
-                <td>
-                  Python, Django 5.2 <Cite n={6} />, Django REST Framework <Cite n={7} />
-                </td>
-              </tr>
-              <tr>
-                <td>ML</td>
-                <td>
-                  pandas, NumPy, scikit-learn <Cite n={2} /> (TF-IDF + LinearSVC/CalibratedClassifierCV), joblib
-                </td>
-              </tr>
-              <tr>
-                <td>Database</td>
-                <td>SQLite — Django admin/auth only; no application data persisted</td>
-              </tr>
-              <tr>
-                <td>Comms</td>
-                <td>REST API (JSON) over HTTP</td>
-              </tr>
-            </tbody>
-          </table>
+        <div className="hib-stack-list">
+          <div className="hib-stack-row">
+            <span>Frontend</span>
+            <span>React <Cite n={8} />, Vite <Cite n={9} />, plain JavaScript, CSS (no UI framework)</span>
+          </div>
+          <div className="hib-stack-row">
+            <span>Backend</span>
+            <span>Python, Django 5.2 <Cite n={6} />, Django REST Framework <Cite n={7} /></span>
+          </div>
+          <div className="hib-stack-row">
+            <span>ML</span>
+            <span>pandas, NumPy, scikit-learn <Cite n={2} /> (TF-IDF + LinearSVC/CalibratedClassifierCV), joblib</span>
+          </div>
+          <div className="hib-stack-row">
+            <span>Database</span>
+            <span>SQLite — Django admin/auth only; no application data persisted</span>
+          </div>
+          <div className="hib-stack-row">
+            <span>Comms</span>
+            <span>REST API (JSON) over HTTP</span>
+          </div>
         </div>
         <p className="hib-note">
           No Docker, Kubernetes, microservices, Redis, or Celery — deliberately out of
@@ -723,21 +760,20 @@ export default function HowItsBuilt() {
         num="10"
         eyebrow="LIMITATIONS & FUTURE WORK"
         title="What this is — and isn't."
-        alt
       >
         <div className="hib-grid-2">
-          <div className="hib-card hib-card--muted">
+          <div className="hib-block">
             <h3>Known limitations</h3>
-            <ul>
+            <ul className="hib-plain-list">
               <li>Trained on SMS text, not full raw email (headers/HTML)</li>
               <li>No adversarial-obfuscation testing</li>
               <li>English only</li>
               <li>Fixed 0.5 decision threshold, not cost-tuned</li>
             </ul>
           </div>
-          <div className="hib-card">
+          <div className="hib-block">
             <h3>Planned improvements</h3>
-            <ul>
+            <ul className="hib-plain-list">
               <li>An email-specific dataset for generalization comparison</li>
               <li>Cost-sensitive threshold tuning</li>
               <li>Surfacing top contributing TF-IDF features per prediction</li>

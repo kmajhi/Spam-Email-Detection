@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import Navbar from "./components/Navbar";
 import Detector from "./pages/Detector";
 import HowItsBuilt, { SECTION_IDS } from "./pages/HowItsBuilt";
+import Contributors from "./pages/Contributors";
 
 function isHowItsBuiltHash(hash) {
   return hash === "how-its-built" || SECTION_IDS.includes(hash) || hash.startsWith("ref-");
@@ -9,7 +10,9 @@ function isHowItsBuiltHash(hash) {
 
 function routeFromHash() {
   const hash = window.location.hash.replace(/^#\/?/, "");
-  return isHowItsBuiltHash(hash) ? "how-its-built" : "detector";
+  if (isHowItsBuiltHash(hash)) return "how-its-built";
+  if (hash === "contributors") return "contributors";
+  return "detector";
 }
 
 export default function App() {
@@ -18,10 +21,10 @@ export default function App() {
   useEffect(() => {
     function onHashChange() {
       const hash = window.location.hash.replace(/^#\/?/, "");
-      setRoute(isHowItsBuiltHash(hash) ? "how-its-built" : "detector");
+      setRoute(routeFromHash());
       // Only reset scroll on an actual page change -- a section/reference
       // hash within How It's Built is handled by that page's own scrolling.
-      if (hash === "" || hash === "how-its-built") {
+      if (hash === "" || hash === "how-its-built" || hash === "contributors") {
         window.scrollTo({ top: 0 });
       }
     }
@@ -32,7 +35,9 @@ export default function App() {
   return (
     <>
       <Navbar route={route} />
-      {route === "how-its-built" ? <HowItsBuilt /> : <Detector />}
+      {route === "how-its-built" && <HowItsBuilt />}
+      {route === "contributors" && <Contributors />}
+      {route === "detector" && <Detector />}
     </>
   );
 }

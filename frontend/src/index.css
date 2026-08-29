@@ -21,7 +21,9 @@
 }
 
 @media (prefers-color-scheme: dark) {
-  :root {
+  /* Followed automatically until the user picks a theme explicitly via the
+     navbar toggle (which stamps data-theme and wins below). */
+  :root:not([data-theme="light"]) {
     --bg: #101218;
     --surface: #171a23;
     --border: #2a2e3a;
@@ -39,6 +41,30 @@
     --shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
     --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.4);
   }
+}
+
+:root[data-theme="dark"] {
+  --bg: #101218;
+  --surface: #171a23;
+  --border: #2a2e3a;
+  --text: #e7e9f0;
+  --text-muted: #9ba0b3;
+  --accent: #818cf8;
+  --accent-hover: #a5b4fc;
+  --accent-soft: rgba(129, 140, 248, 0.15);
+  --spam: #f87171;
+  --spam-soft: #2a1417;
+  --spam-border: #5c2328;
+  --ham: #4ade80;
+  --ham-soft: #12271b;
+  --ham-border: #23492f;
+  --shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.4);
+  color-scheme: dark;
+}
+
+:root[data-theme="light"] {
+  color-scheme: light;
 }
 
 * {
