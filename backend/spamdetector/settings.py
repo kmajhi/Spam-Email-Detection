@@ -142,6 +142,14 @@ REST_FRAMEWORK = {
     'DEFAULT_THROTTLE_CLASSES': ['rest_framework.throttling.AnonRateThrottle'],
     'DEFAULT_THROTTLE_RATES': {'anon': '60/min'},
     'EXCEPTION_HANDLER': 'detector.exceptions.spam_api_exception_handler',
+    # No login/session feature exists anywhere in this app -- these endpoints
+    # are deliberately public. DRF's default SessionAuthentication would still
+    # enforce CSRF on every POST regardless (Django's AnonymousUser.is_active
+    # is True, so SessionAuthentication treats every anonymous request as an
+    # authenticated session to CSRF-check), which broke POST /api/predict/
+    # whenever the frontend and API share an origin (i.e. in production).
+    'DEFAULT_AUTHENTICATION_CLASSES': [],
+    'DEFAULT_PERMISSION_CLASSES': ['rest_framework.permissions.AllowAny'],
 }
 
 # --- ML model artifact -------------------------------------------------------
